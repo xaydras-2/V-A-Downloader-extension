@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import "../public/css/style.css";
 
+const API_KEY = process.env.API_KEY;
+
 interface AppState {
   url: string;
   message: string;
@@ -70,6 +72,7 @@ class App extends Component<{}, AppState> {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "api-key": `${API_KEY}`,
         },
         body: JSON.stringify({ data: data }),
       });

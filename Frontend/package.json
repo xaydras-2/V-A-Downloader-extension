@@ -17,11 +17,13 @@
     "build": "webpack --mode production"
   },
   "devDependencies": {
+    "@types/dotenv-webpack": "^7.0.7",
     "@types/react": "^18.3.4",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
     "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^7.1.2",
+    "dotenv-webpack": "^8.1.0",
     "postcss": "^8.4.41",
     "postcss-loader": "^8.1.1",
     "postcss-preset-mantine": "^1.17.0",
