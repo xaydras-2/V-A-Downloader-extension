@@ -111,9 +111,9 @@ else
 
 ### some updates
 
-#### i already mention all the updates in a commit this just more explaination(yapping)
+#### i already mention all the updates in a commit this just more explanation(yapping)
 
-you'll need to, first to install an extension, inside your default browser or whatever browser you tyipcaly use, that will help you extract your cookies from youtube and then use it inside the code, so please the file that's going to be exported, move it inside the Backend folder, or change the Dir inside the command dic
+you'll need to, first to install an extension, inside your default browser or whatever browser you typically use, that will help you extract your cookies from youtube and then use it inside the code, so please the file that's going to be exported, move it inside the Backend folder, or change the Dir inside the command dic
 
 it will run in the port 8000
 ## Donation
