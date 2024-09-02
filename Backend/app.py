@@ -62,13 +62,14 @@ async def download_video(request: DownloadRequest, api_key: str = Depends(verify
         raise HTTPException(status_code=400, detail="Unsupported file type")
     
     try:
-        # Extract video information using yt-dlp
         command_info = [
             "yt-dlp",
-            "--print-json", 
+            "--print-json",
             "--skip-download",
+            "--cookies", "cookies.txt",
             video_url
         ]
+
         result = subprocess.run(command_info, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         
         if result.returncode != 0:
@@ -86,7 +87,7 @@ async def download_video(request: DownloadRequest, api_key: str = Depends(verify
 
 
         # Stream the video download directly to the client
-        command = ["yt-dlp", "-o", "-", video_url]
+        command = ["yt-dlp", "-o", "-", "--cookies", "cookies.txt", video_url]
         return StreamingResponse(
             content=generate_stream(command),
             media_type="application/octet-stream",
