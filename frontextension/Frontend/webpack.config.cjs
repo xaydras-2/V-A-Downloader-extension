@@ -31,12 +31,15 @@ module.exports = {
       },
     ],
   },
+
+  devtool: 'source-map',
+
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx"],
   },
   plugins: [
     new Dotenv({
-      path: path.resolve(__dirname, '../Backend/.env'), // specify your .env path
+      path: path.resolve(__dirname, '../../Backend/.env'), // specify your .env path
     }),
     new HtmlWebpackPlugin({
       template: "./src/index.html",
@@ -51,12 +54,5 @@ module.exports = {
     static: path.join(__dirname, "dist"),
     compress: true,
     port: 9000,
-    proxy: [
-      {
-        context: ["/download"],
-        target: "http://localhost:8000", // Laravel's default server port
-        changeOrigin: true,
-      },
-    ],
   },
 };
