@@ -107,6 +107,8 @@ else
     fastapi dev app.py
 ```
 
+it will run in the port 8000
+
 ## Update
 
 ### some updates
@@ -115,7 +117,6 @@ else
 
 you'll need to, first to install an extension, inside your default browser or whatever browser you typically use, that will help you extract your cookies from youtube and then use it inside the code, so please the file that's going to be exported, move it inside the Backend folder, or change the Dir inside the command dic
 
-it will run in the port 8000
 ## Donation
 If you'd like to donate, you can do so via my PayPal:
 

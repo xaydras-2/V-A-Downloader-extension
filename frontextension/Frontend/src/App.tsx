@@ -68,7 +68,7 @@ class App extends Component<{}, AppState> {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/download", {
+      const response = await fetch("https://4ece-41-250-101-101.ngrok-free.app/api/download", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

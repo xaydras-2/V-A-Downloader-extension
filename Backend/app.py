@@ -8,10 +8,13 @@ import os
 import re
 from typing import Iterator
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
+
+
 
 app = FastAPI()
 
@@ -48,8 +51,9 @@ def verify_api_key(api_key: str = Header(...)):
     if api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
-@app.post("/download")
+@app.post("/api/download")
 async def download_video(request: DownloadRequest, api_key: str = Depends(verify_api_key)):
+    time.sleep(10)  # Delay for 10 seconds
     # Extract and validate data from the nested format
     video_url = str(request.data.url)
     file_type = request.data.type
@@ -60,13 +64,16 @@ async def download_video(request: DownloadRequest, api_key: str = Depends(verify
     # Validate file type
     if file_type not in ["mp4", "mp3", "webm", "mkv"]:
         raise HTTPException(status_code=400, detail="Unsupported file type")
-    
+
+    # return JSONResponse(content={"url" : f"http://{username}:{password}@{proxy_ip}:{port_number}"})
+
     try:
         command_info = [
             "yt-dlp",
             "--print-json",
             "--skip-download",
             "--cookies", "cookies.txt",
+            "--force-ipv4",
             video_url
         ]
 
@@ -78,7 +85,7 @@ async def download_video(request: DownloadRequest, api_key: str = Depends(verify
         video_info = json.loads(result.stdout)
         title = video_info.get("title", "Unknown_Title")
         title = re.sub(r"[^\w\s]", "", title).replace(" ", "_")  # Sanitize title
-        filename = f"{title}.{file_type}"
+        filename = f"{title}"
         abs_path = os.path.abspath(filename)
 
         # Check if the video is already downloaded
@@ -87,7 +94,15 @@ async def download_video(request: DownloadRequest, api_key: str = Depends(verify
 
 
         # Stream the video download directly to the client
-        command = ["yt-dlp", "-o", "-", "--cookies", "cookies.txt", video_url]
+        command = [
+                "yt-dlp",
+                "-o",
+                "-",
+                "--cookies",
+                "cookies.txt",
+                "--force-ipv4",
+                video_url
+            ]
         return StreamingResponse(
             content=generate_stream(command),
             media_type="application/octet-stream",
