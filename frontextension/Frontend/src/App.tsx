@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import "../public/css/style.css";
+
 
 const API_KEY = process.env.API_KEY;
 
@@ -8,6 +8,7 @@ interface AppState {
   message: string;
   type: string;
 }
+
 
 class App extends Component<{}, AppState> {
   constructor(props: {}) {
@@ -68,7 +69,7 @@ class App extends Component<{}, AppState> {
     };
 
     try {
-      const response = await fetch("https://4ece-41-250-101-101.ngrok-free.app/api/download", {
+      const response = await fetch("https://2078-196-65-34-130.ngrok-free.app/api/download", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

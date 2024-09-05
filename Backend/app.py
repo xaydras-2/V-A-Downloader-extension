@@ -9,6 +9,9 @@ import re
 from typing import Iterator
 from dotenv import load_dotenv
 import time
+import unicodedata
+import urllib.parse
+
 
 load_dotenv()
 
@@ -62,8 +65,8 @@ class VideoDownloader:
             raise HTTPException(status_code=400, detail="Unsupported file type")
 
     async def download_video(self, request: DownloadRequest, api_key: str = Depends(verify_api_key)):
-        
-        time.sleep(10)  # Delay for 10 seconds
+
+        time.sleep(2)  # Delay for 10 seconds
         
         video_url = str(request.data.url)
         file_type = request.data.type
@@ -88,8 +91,10 @@ class VideoDownloader:
             
             video_info = json.loads(result.stdout)
             title = video_info.get("title", "Unknown_Title")
+            # title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').decode('utf-8')
             title = re.sub(r"[^\w\s]", "", title).replace(" ", "_")  # Sanitize title
-            filename = f"{title}"
+            filename = f"{title}.{file_type}"
+            encoded_filename = urllib.parse.quote(filename)
             abs_path = os.path.abspath(filename)
 
             if os.path.exists(filename):
@@ -107,7 +112,7 @@ class VideoDownloader:
             return StreamingResponse(
                 content=self.generate_stream(command),
                 media_type="application/octet-stream",
-                headers={"Content-Disposition": f"attachment; filename={filename}"}
+                headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
             )
         
         except HTTPException as e:

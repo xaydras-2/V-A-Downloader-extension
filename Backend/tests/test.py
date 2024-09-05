@@ -1,8 +1,7 @@
 import subprocess
 import os
 import re
-
-
+import json
 
 
 #trying different library (yt-dlp)
@@ -29,3 +28,33 @@ def is_valid_url(video_url):
         print("Valid URL")
     else:
         print("Invalid URL")
+
+
+def get_video_title(video_url):
+    # Command to extract video metadata as JSON
+    command_info = [
+        "yt-dlp",
+        "--print-json",
+        "--skip-download",
+        "--cookies", "cookies.txt",
+        "--force-ipv4",
+        video_url
+    ]
+    
+    # Run the command and capture the output
+    result = subprocess.run(command_info, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    
+    if result.returncode == 0:
+        # Parse the JSON output
+        video_info = json.loads(result.stdout)
+        # Extract the title
+        title = video_info.get("title", "No title found")
+        return title
+    else:
+        print(f"Error: {result.stderr}")
+        return None
+
+# Example usage
+video_url = "https://www.youtube.com/watch?v=PdemY3bRX8g"
+title = get_video_title(video_url)
+print(f"Video Title: {title}")
