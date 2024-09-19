@@ -1,14 +1,14 @@
 import React, { Component } from "react";
+import { browser } from 'webextension-polyfill-ts';
 
 
-const API_KEY = process.env.API_KEY;
+let api_key = process.env.API_KEY;
 
 interface AppState {
   url: string;
   message: string;
   type: string;
 }
-
 
 class App extends Component<{}, AppState> {
   constructor(props: {}) {
@@ -20,47 +20,7 @@ class App extends Component<{}, AppState> {
     };
   }
 
-  /**
-   * Handles the response state
-   * @param response The response of the request
-   * @throws {Error} If the response is not ok
-   */
-  async ResponseState(response: Response) {
-    if (response.ok) {
-      const blob = await response.blob(); // Get the response as a Blob
-
-      // Extract filename from Content-Disposition header
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `download.${this.state.type}`; // Fallback filename
-
-      if (contentDisposition) {
-        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        const matches = filenameRegex.exec(contentDisposition);
-        if (matches != null && matches[1]) {
-          filename = matches[1].replace(/['"]/g, "");
-        }
-      }
-
-      // Create a URL for the Blob object
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-
-      // Revoke the object URL to release memory
-      window.URL.revokeObjectURL(url);
-
-      this.setState({ message: "Download completed!" });
-    } else {
-      const data = await response.json();
-      this.setState({ message: data.detail || "An error occurred" });
-    }
-  }
-
-  handleDownload = async () => {
+  handleDownload = () => {
     this.setState({ message: "Downloading your video..." });
 
     let data = {
@@ -68,25 +28,13 @@ class App extends Component<{}, AppState> {
       type: this.state.type,
     };
 
-    try {
-      const response = await fetch("https://2078-196-65-34-130.ngrok-free.app/api/download", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": `${API_KEY}`,
-        },
-        body: JSON.stringify({ data: data }),
-      });
+    browser.runtime.sendMessage({ action: 'download', data: data, api_key: api_key });
 
-      this.ResponseState(response);
-    } catch (error) {
-      // Explicitly handle the `unknown` type
-      if (error instanceof Error) {
-        this.setState({ message: "An error occurred: " + error.message });
-      } else {
-        this.setState({ message: "An unknown error occurred" });
+    browser.runtime.onMessage.addListener((message) => {
+      if (message.action === 'downloadStatus') {
+        this.setState({ message: message.status });
       }
-    }
+    });
   };
 
   handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,4 +75,5 @@ class App extends Component<{}, AppState> {
     );
   }
 }
+
 export default App;

@@ -1,6 +1,5 @@
-from fastapi import FastAPI, HTTPException, Depends, Header
-from fastapi.responses import JSONResponse, StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import HTTPException, Depends, Header
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import json
 import subprocess
@@ -9,27 +8,16 @@ import re
 from typing import Iterator
 from dotenv import load_dotenv
 import time
-import unicodedata
 import urllib.parse
+import logging
 
 
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 
+logging.basicConfig(level=logging.INFO)
 
-
-app = FastAPI()
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["POST"],
-    allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
-)
 
 # Define a Pydantic model for the nested request data
 class DownloadRequestData(BaseModel):
@@ -37,7 +25,7 @@ class DownloadRequestData(BaseModel):
     type: str
 
 class DownloadRequest(BaseModel):
-    data: DownloadRequestData
+    data: DownloadRequestData 
 
 
 class VideoDownloader:
@@ -48,6 +36,7 @@ class VideoDownloader:
         if api_key != self.api_key:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
+    # Define a generator function to stream the video
     def generate_stream(self, command: list[str]) -> Iterator[bytes]:
         with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
             if process.stdout:
@@ -63,10 +52,13 @@ class VideoDownloader:
     def validate_file_type(self, file_type: str):
         if file_type not in ["mp4", "mp3", "webm", "mkv"]:
             raise HTTPException(status_code=400, detail="Unsupported file type")
+        
 
     async def download_video(self, request: DownloadRequest, api_key: str = Depends(verify_api_key)):
-
-        time.sleep(2)  # Delay for 10 seconds
+        
+        time.sleep(5)  # Delay for 5 seconds
+        
+        logging.info("Starting download process")
         
         video_url = str(request.data.url)
         file_type = request.data.type
@@ -75,14 +67,20 @@ class VideoDownloader:
         self.validate_file_type(file_type)
 
         try:
+
+            # Command to extract video metadata as JSON
             command_info = [
                 "yt-dlp",
                 "--print-json",
                 "--skip-download",
                 "--cookies", "cookies.txt",
                 "--force-ipv4",
+                "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.15.0esr) Gecko/20100101 Firefox/115.15.0esr",
+                "--no-check-certificate",
                 video_url
             ]
+
+            logging.info(f"Running command: {' '.join(command_info)}")
 
             result = subprocess.run(command_info, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
@@ -91,38 +89,28 @@ class VideoDownloader:
             
             video_info = json.loads(result.stdout)
             title = video_info.get("title", "Unknown_Title")
-            # title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').decode('utf-8')
             title = re.sub(r"[^\w\s]", "", title).replace(" ", "_")  # Sanitize title
             filename = f"{title}.{file_type}"
             encoded_filename = urllib.parse.quote(filename)
-            abs_path = os.path.abspath(filename)
 
-            if os.path.exists(filename):
-                return JSONResponse(content={"success": "The video has already been downloaded", "path": filename, "abs_path": abs_path, "title": title})
 
             command = [
                 "yt-dlp",
                 "-o",
                 "-",
-                "--cookies",
-                "cookies.txt",
+                "--cookies", "cookies.txt",
                 "--force-ipv4",
+                "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.15.0esr) Gecko/20100101 Firefox/115.15.0esr",
+                "--no-check-certificate",
                 video_url
             ]
             return StreamingResponse(
                 content=self.generate_stream(command),
                 media_type="application/octet-stream",
-                headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
+                headers={"Content-Disposition": f"attachment; filename*={encoded_filename}"}
             )
         
         except HTTPException as e:
             raise HTTPException(status_code=e.status_code, detail=f"the detail: ${e.detail}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-# Instantiate the VideoDownloader class
-video_downloader = VideoDownloader()
-
-@app.post("/api/download")
-async def download_video(request: DownloadRequest, api_key: str = Depends(video_downloader.verify_api_key)):
-    return await video_downloader.download_video(request, api_key)

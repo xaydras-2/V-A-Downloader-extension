@@ -1,11 +1,11 @@
 {
-  "name": "YouTube Downloader",
+  "name": "Video/Audio Downloader",
   "version": "1.0",
-  "manifest_version": 3,
-  "description": "A simple Firefox extension.",
-  "permissions": ["activeTab", "storage", "tabs"],
+  "manifest_version": 2,
+  "description": "Download videos or audios from various sources.",
+  "permissions": ["downloads", "storage", "activeTab", "tabs"],
 
-  "action": {
+  "browser_action": {
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -14,13 +14,12 @@
     "default_popup": "./Frontend/dist/index.html"
   },
   "background": {
-    "scripts": ["./Frontend/dist/bundle.js"]
+    "scripts": ["./Frontend/dist/background.js"],
+    "persistent": false
   },
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ]
+      "matches": ["<all_urls>"]
     }
   ],
   "icons": {
@@ -29,3 +28,5 @@
     "128": "icons/icon128.png"
   }
 }
+
+

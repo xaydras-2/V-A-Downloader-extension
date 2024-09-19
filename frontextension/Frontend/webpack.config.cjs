@@ -4,10 +4,13 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
-  entry: "./src/index.tsx",
+  entry: {
+    app: "./src/index.tsx",
+    background: "./src/background.tsx", // Add your background script here
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "bundle.js",
+    filename: "[name].js",
   },
   module: {
     rules: [
@@ -42,8 +45,10 @@ module.exports = {
       path: path.resolve(__dirname, '../../Backend/.env'), // specify your .env path
     }),
     new HtmlWebpackPlugin({
-      template: "./src/index.html",
+      template: "./src/index.html", // Make sure the path is correct
+      chunks: ["app"], // Only include the 'app' chunk in your HTML
     }),
+    
     new CopyWebpackPlugin({
       patterns: [
         { from: "./public", to: "" }, // Copy the 'public' folder to the root of 'dist'
