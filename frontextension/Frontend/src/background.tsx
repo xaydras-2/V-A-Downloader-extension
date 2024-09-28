@@ -18,19 +18,28 @@ browser.runtime.onMessage.addListener(async (message) => {
       );
 
       if (response.ok) {
-        const blob = await response.blob();
+        const blob = await response.blob(); // Receive the blob as octet-stream
+
         const contentDisposition = response.headers.get("Content-Disposition");
         let filename = `download.${data.type}`; // Fallback filename
 
         if (contentDisposition) {
-          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          const filenameRegex =
+            /(?:filename\*=UTF-8''([^;]+)|filename\s*=\s*"([^"]+)")/i;
           const matches = filenameRegex.exec(contentDisposition);
-          if (matches != null && matches[1]) {
-            filename = matches[1].replace(/['"]/g, "");
+
+          if (matches != null) {
+            if (matches[1]) {
+              // For RFC5987 encoding (UTF-8)
+              filename = decodeURIComponent(matches[1]).replace(/['"]/g, "");
+            } else if (matches[2]) {
+              // For regular filename field
+              filename = matches[2].replace(/['"]/g, "");
+            }
           }
         }
 
-        const url = window.URL.createObjectURL(blob);
+        const url = window.URL.createObjectURL(blob); // Use blob directly
 
         // Trigger download using the blob URL
         browser.downloads
@@ -40,7 +49,6 @@ browser.runtime.onMessage.addListener(async (message) => {
             conflictAction: "overwrite",
           })
           .then(() => {
-            window.URL.revokeObjectURL(url); // Clean up the object URL
             browser.runtime.sendMessage({
               action: "downloadStatus",
               status: "Download completed!",

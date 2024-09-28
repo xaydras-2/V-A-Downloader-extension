@@ -18,12 +18,12 @@ def download_video(video_url):
         print(e.stderr)
 
 # Example video URL
-video_url = "https://www.youtube.com/watch?v=Vueyx9TBEqE&pp=ygUOMC4zMCBzZWMgdmlkZW8%3D"
-download_video(video_url)
+# video_url = "https://www.youtube.com/watch?v=Vueyx9TBEqE&pp=ygUOMC4zMCBzZWMgdmlkZW8%3D"
+# download_video(video_url)
 
 # Check if the video_url matches the regex pattern
 def is_valid_url(video_url):
-    pattern = r"^(https?:\/\/)?([a-zA-Z0-9_-]+\.[a-zA-Z]{2,}\.[a-zA-Z]{2,})(\/[a-zA-Z0-9@:%_\+.~#?&//=]*)?$"
+    pattern = r"^[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$"
     if re.match(pattern, video_url):
         print("Valid URL")
     else:
@@ -55,6 +55,29 @@ def get_video_title(video_url):
         return None
 
 # Example usage
-video_url = "https://www.youtube.com/watch?v=PdemY3bRX8g"
-title = get_video_title(video_url)
-print(f"Video Title: {title}")
+# video_url = "https://www.youtube.com/watch?v=zBjJUV-lzHo"
+
+# is_valid_url(video_url)
+
+
+banned_domains = [
+    "pornhub.com", "xvideos.com", "redtube.com", 
+    "xnxx.com", "youporn.com", "tube8.com", "adult.com",
+    "xhamster.com", "beeg.com", "spankwire.com", "keezmovies.com",
+    "xxxvideos247.com", "xxxstreams.com", "xxxmovies.com", "xxxadulttube.com",
+    "rule34.com"
+]
+
+def is_banned_url(url, banned_domains):
+    for domain in banned_domains:
+        if re.search(rf"(?:https?://)?(?:www\.)?{domain}", url):
+            return True
+    return False
+
+video_url = "https://www.pornhub.com/view_video.php?viewkey=123456789"
+
+if is_banned_url(video_url, banned_domains):
+    print(f"Blocked: {video_url} is on the banned list.")
+else:
+    print(f"Allowed: {video_url} is not on the banned list.")
+

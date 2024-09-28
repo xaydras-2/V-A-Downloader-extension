@@ -1,6 +1,7 @@
 from fastapi import HTTPException, Depends, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from urllib.parse import urlparse
 import json
 import subprocess
 import os
@@ -40,18 +41,36 @@ class VideoDownloader:
     def generate_stream(self, command: list[str]) -> Iterator[bytes]:
         with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
             if process.stdout:
-                for chunk in iter(lambda: process.stdout.read(1024), b''):
+                for chunk in iter(lambda: process.stdout.read(1024 * 64), b''):
                     yield chunk
             else:
                 raise HTTPException(status_code=500, detail="Failed to initialize stdout for the process")
 
+
     def validate_url(self, video_url: str):
-        if not re.match(r"^(https?:\/\/)?([a-zA-Z0-9_-]+\.[a-zA-Z]{2,}\.[a-zA-Z]{2,})(\/[a-zA-Z0-9@:%_\+.~#?&//=]*)?$", video_url):
+        if not re.match(r"^[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$", video_url):
             raise HTTPException(status_code=400, detail="Invalid URL format")
 
     def validate_file_type(self, file_type: str):
         if file_type not in ["mp4", "mp3", "webm", "mkv"]:
             raise HTTPException(status_code=400, detail="Unsupported file type")
+        
+    def banned_domains(self, video_url: str):
+        # Set of banned domains for faster lookup
+        banned_domains_set = {
+            "pornhub.com", "xvideos.com", "redtube.com", 
+            "xnxx.com", "youporn.com", "tube8.com", "adult.com",
+            "xhamster.com", "beeg.com", "spankwire.com", "keezmovies.com",
+            "xxxvideos247.com", "xxxstreams.com", "xxxmovies.com", "xxxadulttube.com",
+            "rule34.com"
+        }
+        
+        # Extract the domain from the URL
+        parsed_url = urlparse(video_url)
+        domain = parsed_url.netloc.replace("www.", "")  # Remove 'www.' if present
+        
+        # Check if the domain is in the banned list
+        return domain in banned_domains_set
         
 
     async def download_video(self, request: DownloadRequest, api_key: str = Depends(verify_api_key)):
@@ -65,6 +84,9 @@ class VideoDownloader:
 
         self.validate_url(video_url)
         self.validate_file_type(file_type)
+
+        if self.banned_domains(video_url):
+            raise HTTPException(status_code=403, detail="Domain is banned")
 
         try:
 
@@ -107,7 +129,7 @@ class VideoDownloader:
             return StreamingResponse(
                 content=self.generate_stream(command),
                 media_type="application/octet-stream",
-                headers={"Content-Disposition": f"attachment; filename*={encoded_filename}"}
+               headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
             )
         
         except HTTPException as e:
