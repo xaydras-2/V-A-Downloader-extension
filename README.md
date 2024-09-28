@@ -24,6 +24,13 @@ or if you're inside the frontend dir just run
     npm install
 ```
 
+then
+
+```bash
+npx webpack --mode production
+```
+This will bundle and optimize the source code.
+
 ### Backend
 
 #### to install the necessary pip for py without a virtual environment (aka .venv)
