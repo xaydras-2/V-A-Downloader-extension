@@ -2,7 +2,7 @@ import subprocess
 import os
 import re
 import json
-
+import asyncio
 
 #trying different library (yt-dlp)
 
@@ -74,10 +74,26 @@ def is_banned_url(url, banned_domains):
             return True
     return False
 
-video_url = "https://www.pornhub.com/view_video.php?viewkey=123456789"
+# video_url = "https://www.pornhub.com/view_video.php?viewkey=123456789"
 
-if is_banned_url(video_url, banned_domains):
-    print(f"Blocked: {video_url} is on the banned list.")
-else:
-    print(f"Allowed: {video_url} is not on the banned list.")
+# if is_banned_url(video_url, banned_domains):
+#     print(f"Blocked: {video_url} is on the banned list.")
+# else:
+#     print(f"Allowed: {video_url} is not on the banned list.")
 
+
+
+async def test_subprocess():
+    # Use a raw string to avoid issues with backslashes
+    batch_file_path = r'C:\Users\hp\Desktop\Extension\Video_downloader\Backend\tests\test.bat'
+    
+    process = await asyncio.create_subprocess_exec(
+        batch_file_path,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+
+    stdout, stderr = await process.communicate()
+    print(stdout.decode().strip())
+
+asyncio.run(test_subprocess())

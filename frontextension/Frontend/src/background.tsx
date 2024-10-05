@@ -42,41 +42,66 @@ browser.runtime.onMessage.addListener(async (message) => {
         const url = window.URL.createObjectURL(blob); // Use blob directly
 
         // Trigger download using the blob URL
-        browser.downloads
-          .download({
-            url: url,
-            filename: filename,
-            conflictAction: "overwrite",
-          })
-          .then(() => {
-            browser.runtime.sendMessage({
-              action: "downloadStatus",
-              status: "Download completed!",
-            });
-          })
-          .catch((error) => {
-            console.error("Download error:", error);
-            browser.runtime.sendMessage({
-              action: "downloadStatus",
-              status:
-                "An error occurred during download: " +
-                (error instanceof Error ? error.message : "Unknown error"),
-            });
+        await browser.downloads.download({
+          url: url,
+          filename: filename,
+          conflictAction: "overwrite",
+        });
+
+        try {
+          await browser.storage.local.set({
+            downloadStatus: "Download completed!",
           });
-      } else {
-        const errorData = await response.json();
+        } catch (error) {
+          console.error("Error setting download status:", error);
+          if (browser.runtime.lastError) {
+            console.log("Storage error:", browser.runtime.lastError.message);
+          }
+        }
+
+        // Send message to the UI if it's open
         browser.runtime.sendMessage({
           action: "downloadStatus",
-          status: errorData.detail || "An error occurred",
+          status: "Download completed!",
+          message: "Download completed!",
+        });
+        browser.tabs.onRemoved.addListener(() => {
+          browser.storage.local.set({ downloadStatus: "Download completed!" });
+        });
+      } else {
+        const errorData = await response.json();
+        const status = errorData.detail || "An error occurred";
+
+        // Save download status in storage
+        await browser.storage.local.set({ downloadStatus: status });
+
+        // Send message to the UI if it's open
+        browser.runtime.sendMessage({
+          action: "downloadStatus",
+          status: "Download completed!",
+          message: status,
+        });
+        browser.tabs.onRemoved.addListener(() => {
+          browser.storage.local.set({ downloadStatus: status });
         });
       }
     } catch (error) {
       console.error("Fetch error:", error);
+      const status =
+        "An error occurred: " +
+        (error instanceof Error ? error.message : "Unknown error");
+
+      // Save download status in storage
+      await browser.storage.local.set({ downloadStatus: status });
+
+      // Send message to the UI if it's open
       browser.runtime.sendMessage({
         action: "downloadStatus",
-        status:
-          "An error occurred: " +
-          (error instanceof Error ? error.message : "Unknown error"),
+        status: "Download completed!",
+        message: status,
+      });
+      browser.tabs.onRemoved.addListener(() => {
+        browser.storage.local.set({ downloadStatus: status });
       });
     }
   }
