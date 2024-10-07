@@ -79,23 +79,13 @@ then run
 
 ### Frontend
 
-to Start the Frontend-server run
+😊 To run the extension locally:
 
-if inside the Frontend Dir
+  1. Go to about:debugging in Firefox.
+  2. Select "This Firefox".
+  3. Click "Load Temporary Add-on" and choose the manifest.json file.
 
-```bash
-    npm start
-```
-
-else 
-
-```bash
-    cd Frontend
-    npm start
-```
-
-it will run in the port 9000 you can change it inside the 
-webpack.config.cjs
+Keep in mind that the extension will only be active for the current session. Once you close the browser, the temporary extension will be removed.
 
 ### Backend
 
